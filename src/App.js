@@ -1,25 +1,67 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import React, { useState, useEffect } from "react";
+import { Formik, Form, Field } from "formik";
+import { Routes, Route, useSearchParams } from "react-router-dom";
+import { convertRoman } from "./api";
 
 function App() {
+  const [arabInt, setArabInt] = useState();
+  const [searchParams, setSearchParams] = useSearchParams();
+  console.log(arabInt);
+  const query = searchParams.get("query") ?? "";
+  const onQueryChange = ({ query }) => {
+    console.log(query);
+    query
+      ? setSearchParams({ query: query.toLowerCase() })
+      : setSearchParams({});
+  };
+  useEffect(() => {
+    console.log(query);
+
+    if (query === "") return;
+    async function convertRomanToArab() {
+      try {
+        const response = await convertRoman(query);
+        console.log(response);
+        setArabInt(response.results);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    convertRomanToArab();
+  }, [query, setSearchParams]);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <ConvertInput
+            initialValue={query}
+            onSubmit={(query) => onQueryChange(query)}
+          />
+        }
+      />
+    </Routes>
   );
 }
 
 export default App;
+
+function ConvertInput({ initialValue, onSubmit }) {
+  return (
+    <div>
+      <Formik initialValues={{ query: initialValue }} onSubmit={onSubmit}>
+        <Form>
+          <Field
+            type="text"
+            autoComplete="off"
+            autoFocus
+            placeholder="Enter any Roman numeral (e.g. VII)"
+            name="query"
+          />
+          <button type="submit">Convert</button>
+        </Form>
+      </Formik>
+    </div>
+  );
+}
